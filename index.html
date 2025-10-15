@@ -117,7 +117,10 @@
         });
 
         async function callGeminiApi(apiKey, text) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+            // --- FIX IS HERE ---
+            // Changed "gemini-1.5-flash" to the correct model name "gemini-2.5-flash"
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            
             const prompt = `You are an expert medical analyst AI. Analyze the provided blood report text. Identify key biomarkers, compare their values to the normal ranges given in the text, and determine if they are high, low, or normal. Summarize the findings in simple, easy-to-understand language for a non-medical person. Organize the results clearly and start with a bold disclaimer: DISCLAIMER: This is an AI analysis and not medical advice. Consult a doctor. Here is the report text:\n\n${text}`;
 
             const payload = {
@@ -171,3 +174,4 @@
     </script>
 </body>
 </html>
+
