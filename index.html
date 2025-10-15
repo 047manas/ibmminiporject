@@ -6,9 +6,11 @@
     <title>Mini Blood Report Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <!-- Added Showdown.js to render Markdown -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white shadow-lg rounded-lg p-8 max-w-2xl w-full">
         <h1 class="text-2xl font-bold text-center mb-6">Mini Blood Report Analyzer 🩺</h1>
 
         <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -42,9 +44,10 @@
             </button>
         </div>
 
-        <div id="results-container" class="mt-6 hidden">
-            <h2 class="text-xl font-semibold mb-2">Analysis Results</h2>
-            <div id="results" class="prose max-w-none p-4 bg-gray-50 rounded-md border"></div>
+        <div id="results-container" class="mt-8 hidden">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Analysis Results</h2>
+            <!-- Added prose class for clean typography from Tailwind -->
+            <div id="results" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md border"></div>
         </div>
     </div>
 
@@ -58,6 +61,9 @@
         const errorText = document.getElementById('error-text');
         const resultsContainer = document.getElementById('results-container');
         const resultsDiv = document.getElementById('results');
+
+        // Initialize the Markdown converter
+        const converter = new showdown.Converter();
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
 
@@ -107,7 +113,9 @@
             try {
                 const pdfText = await extractTextFromPdf(pdfFile);
                 const analysis = await callGeminiApi(apiKey, pdfText);
-                resultsDiv.innerHTML = analysis.replace(/\n/g, '<br>');
+                // --- FIX IS HERE ---
+                // Convert Markdown response to clean HTML before displaying
+                resultsDiv.innerHTML = converter.makeHtml(analysis);
                 resultsContainer.classList.remove('hidden');
             } catch (error) {
                 showError(`${error.message}`);
@@ -117,8 +125,6 @@
         });
 
         async function callGeminiApi(apiKey, text) {
-            // --- FIX IS HERE ---
-            // Changed "gemini-1.5-flash" to the correct model name "gemini-2.5-flash"
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             
             const prompt = `You are an expert medical analyst AI. Analyze the provided blood report text. Identify key biomarkers, compare their values to the normal ranges given in the text, and determine if they are high, low, or normal. Summarize the findings in simple, easy-to-understand language for a non-medical person. Organize the results clearly and start with a bold disclaimer: DISCLAIMER: This is an AI analysis and not medical advice. Consult a doctor. Here is the report text:\n\n${text}`;
