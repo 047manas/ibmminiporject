@@ -8,11 +8,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <!-- Modern Sans Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(10px);
             }
 
             to {
@@ -22,293 +46,332 @@
         }
 
         .animate-fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
+            animation: fadeInUp 0.5s ease-out forwards;
         }
 
-        /* Custom scrollbar for raw output */
-        pre::-webkit-scrollbar {
-            height: 8px;
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
 
-        pre::-webkit-scrollbar-thumb {
-            background-color: #4b5563;
-            border-radius: 4px;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
         }
 
-        pre::-webkit-scrollbar-track {
-            background-color: #1f2937;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
         }
     </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen py-8 px-4 font-sans text-gray-800">
+<body class="bg-slate-50 min-h-screen text-slate-800 antialiased selection:bg-brand-100 selection:text-brand-900">
 
-    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
-        <!-- Minimal Vercel Config hint -->
-        <!-- 
-         vercel.json (optional):
-         {
-           "headers": [
-             { "source": "/(.*)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" } ] }
-           ]
-         }
-        -->
-
-        <!-- Header -->
-        <header class="bg-indigo-600 p-6 text-center">
-            <h1 class="text-3xl font-extrabold text-white tracking-wide">Mini Blood Report Analyzer 🩺</h1>
-            <p class="text-indigo-100 mt-2 text-sm font-medium">AI-Powered Educational Insights (via OpenRouter Free
-                Models)</p>
-            <div class="mt-2 bg-indigo-700/50 inline-block px-3 py-1 rounded-full border border-indigo-400/30">
-                <p class="text-xs text-indigo-50 font-medium">⚠️ Educational Demo Only. Not Medical Advice.</p>
+    <!-- Navbar / App Shell Header -->
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-slate-900 tracking-tight">MiniBlood<span
+                        class="text-brand-600">Analyzer</span></span>
             </div>
-        </header>
+            <div class="flex items-center gap-3">
+                <div class="hidden md:flex items-center px-3 py-1 bg-amber-50 border border-amber-200 rounded-full">
+                    <svg class="w-3 h-3 text-amber-500 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-xs font-medium text-amber-800">Educational Demo Only</span>
+                </div>
+                <span
+                    class="px-2 py-1 bg-brand-50 text-brand-700 rounded text-xs font-bold border border-brand-100 uppercase tracking-wider">Beta</span>
+            </div>
+        </div>
+    </nav>
 
-        <main class="p-8">
-            <!-- Error Alert -->
-            <div id="error-message"
-                class="hidden mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm animate-pulse"
-                role="alert">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Error Alert -->
+        <div id="error-message"
+            class="hidden rounded-xl bg-red-50 border border-red-200 p-4 shadow-sm animate-fade-in-up">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <p class="text-sm font-medium text-red-800" id="error-text">Something went wrong.</p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <button onclick="clearError()" class="inline-flex text-red-500 hover:text-red-700">
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L10 8.586 5.707 12.879 4.293 11.465z"
                                 clip-rule="evenodd" />
                         </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-red-700" id="error-text">Something went wrong.</p>
-                    </div>
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Input Section -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- API Key Input -->
-                <div class="relative group">
-                    <label for="apiKey"
-                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">OpenRouter API
-                        Key</label>
+        <!-- Configuration Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+            <div class="flex items-center space-x-2 mb-6">
+                <div class="w-2 h-6 bg-brand-500 rounded-full"></div>
+                <h2 class="text-xl font-bold text-slate-800">New Analysis</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                <!-- Step 1: API Key -->
+                <div class="md:col-span-12 lg:col-span-5 space-y-2">
+                    <div class="flex justify-between">
+                        <label for="apiKey" class="block text-sm font-semibold text-slate-700">Step 1: OpenRouter API
+                            Key</label>
+                        <a href="https://openrouter.ai/keys" target="_blank"
+                            class="text-xs text-brand-600 hover:text-brand-700 font-medium">Get Key &rarr;</a>
+                    </div>
                     <div class="relative">
-                        <input type="password" id="apiKey"
-                            class="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm shadow-sm"
-                            placeholder="sk-..." autocomplete="off">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                             </svg>
                         </div>
+                        <input type="password" id="apiKey"
+                            class="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow bg-slate-50 focus:bg-white"
+                            placeholder="sk-or-..." autocomplete="off">
                     </div>
                 </div>
 
-                <!-- File Input -->
-                <div class="relative group">
-                    <label for="pdfFile"
-                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Upload Report
-                        (PDF)</label>
+                <!-- Step 2: Upload -->
+                <div class="md:col-span-12 lg:col-span-5 space-y-2">
+                    <label class="block text-sm font-semibold text-slate-700">Step 2: Upload Report (PDF)</label>
                     <label
-                        class="flex flex-col items-center justify-center w-full h-[46px] border border-gray-200 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all">
-                        <div class="flex items-center space-x-2">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        class="relative flex flex-col items-center justify-center w-full h-[46px] rounded-lg border border-slate-300 border-dashed cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-brand-400 transition-colors group">
+                        <div class="flex items-center space-x-2 px-4">
+                            <svg class="w-5 h-5 text-slate-400 group-hover:text-brand-500 transition-colors" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                             <span id="file-label"
-                                class="text-sm text-gray-500 font-medium truncate max-w-[150px]">Choose file...</span>
+                                class="text-sm text-slate-500 font-medium truncate max-w-[180px] group-hover:text-brand-700">Select
+                                PDF File...</span>
                         </div>
                         <input id="pdfFile" type="file" class="hidden" accept="application/pdf" />
                     </label>
                 </div>
+
+                <!-- Step 3: Action -->
+                <div class="md:col-span-12 lg:col-span-2">
+                    <button id="analyzeBtn"
+                        class="w-full relative flex items-center justify-center py-3 px-4 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all active:scale-[0.98]">
+                        <span id="button-text" class="flex items-center">
+                            Analyze
+                        </span>
+                        <div id="loading-spinner"
+                            class="absolute inset-0 flex items-center justify-center bg-brand-600 rounded-lg hidden">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
             </div>
+        </div>
 
-            <!-- Analyze Button -->
-            <button id="analyzeBtn"
-                class="w-full relative flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-[0.99] overflow-hidden">
-                <span id="button-text" class="flex items-center">
-                    ANALYZE REPORT <span class="ml-2">➔</span>
-                </span>
-                <div id="loading-spinner"
-                    class="absolute inset-0 flex items-center justify-center bg-indigo-600 hidden">
-                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                        </path>
-                    </svg>
-                    <span class="ml-2 text-indigo-100 font-medium">Processing...</span>
-                </div>
-            </button>
+        <!-- Results Container -->
+        <div id="results-container" class="hidden animate-fade-in-up">
 
-            <!-- Results Dashboard -->
-            <div id="results-container" class="mt-10 hidden space-y-8 animate-fade-in-up">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-                <!-- 1. Health Score Card -->
+                <!-- 1. Overall Health Snapshot -->
                 <div
-                    class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-sm relative overflow-hidden">
+                    class="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between relative overflow-hidden">
                     <div
-                        class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-50 rounded-full blur-2xl opacity-50">
+                        class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-100/50 to-transparent rounded-bl-full -mr-8 -mt-8 pointer-events-none">
                     </div>
 
-                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b border-gray-200 pb-2 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
-                        </svg>
-                        Overall Health Snapshot
-                    </h2>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center mb-1">
+                            Health Score
+                        </h3>
+                        <p class="text-sm text-slate-500 mb-6">AI-calculated wellness metric</p>
+                    </div>
 
-                    <div class="flex flex-col sm:flex-row items-center justify-between">
-                        <!-- Score Circle -->
-                        <div class="flex-shrink-0 mb-4 sm:mb-0">
-                            <div class="relative flex items-center justify-center w-32 h-32">
-                                <svg class="w-full h-full transform -rotate-90">
-                                    <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="10"
-                                        fill="transparent" class="text-gray-200" />
-                                    <circle id="score-circle" cx="64" cy="64" r="56" stroke="currentColor"
-                                        stroke-width="10" fill="transparent" stroke-linecap="round"
-                                        class="text-indigo-600 transition-all duration-1000 ease-out"
-                                        stroke-dasharray="351.86" stroke-dashoffset="351.86" />
-                                </svg>
+                    <div class="flex flex-col items-center justify-center mb-4">
+                        <div class="relative flex items-center justify-center w-40 h-40">
+                            <!-- Background Circle -->
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="80" cy="80" r="70" stroke="#f1f5f9" stroke-width="12" fill="transparent" />
+                                <circle id="score-circle" cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12"
+                                    fill="transparent" stroke-linecap="round"
+                                    class="text-brand-500 transition-all duration-1000 ease-out"
+                                    stroke-dasharray="439.8" stroke-dashoffset="439.8" />
+                            </svg>
+                            <div class="absolute flex flex-col items-center">
                                 <span id="health-score-display"
-                                    class="absolute text-3xl font-black text-gray-800">--</span>
+                                    class="text-4xl font-extrabold text-slate-800 tracking-tighter">--</span>
+                                <span class="text-xs font-semibold text-slate-400 uppercase">out of 100</span>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Category Info -->
-                        <div class="ml-0 sm:ml-8 flex-1 text-center sm:text-left">
-                            <div class="text-sm text-gray-500 uppercase font-semibold tracking-wide mb-1">Health
-                                Category</div>
-                            <div id="health-category-badge"
-                                class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold bg-gray-200 text-gray-700">
-                                Analyzing...
-                            </div>
-                            <p class="mt-3 text-sm text-gray-600 italic">"Based on the extracted test results from your
-                                PDF."</p>
+                    <div class="text-center">
+                        <div id="health-category-badge"
+                            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-slate-100 text-slate-600">
+                            Calculating...
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. Key Numbers Table -->
-                <div>
-                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        Key Biomarkers
-                    </h3>
-                    <div class="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                <!-- 2. Key Biomarkers Table -->
+                <div
+                    class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-slate-800">Key Biomarkers</h3>
+                        <span
+                            class="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm">Extracted
+                            Data</span>
+                    </div>
+                    <div class="overflow-x-auto flex-1 custom-scrollbar">
+                        <table class="min-w-full divide-y divide-slate-100">
+                            <thead class="bg-white">
                                 <tr>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
                                         Test Name</th>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
                                         Result</th>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                        Average Range</th>
+                                        class="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:table-cell">
+                                        Reference</th>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
                                         Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="key-numbers-body" class="bg-white divide-y divide-gray-200 text-sm">
-                                <!-- JS will populate rows here -->
+                            <tbody id="key-numbers-body" class="bg-white divide-y divide-slate-50 text-sm">
+                                <!-- Populated by JS -->
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- 3. Detailed Explanation -->
-                <div>
-                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+            </div>
+
+            <!-- 3. Detailed Analysis Report -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Analysis Text -->
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <div
+                            class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
                         Detailed Analysis
                     </h3>
                     <div id="detailed-explanation"
-                        class="bg-blue-50/50 rounded-lg p-6 border border-blue-100 text-gray-700 leading-relaxed space-y-3 shadow-inner">
-                        <!-- Prose content -->
+                        class="prose prose-slate prose-sm max-w-none text-slate-600 leading-relaxed font-normal">
+                        <!-- Content -->
                     </div>
                 </div>
 
-                <!-- 4. General Wellness Tips -->
-                <div>
-                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                <!-- 4. Wellness Tips -->
+                <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <div
+                            class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mr-3">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
                         Wellness Tips
                     </h3>
                     <div id="wellness-tips" class="space-y-3">
-                        <!-- Tips Cards populated by JS -->
+                        <!-- Cards -->
                     </div>
                 </div>
+            </div>
 
-                <!-- Collapsible Raw Data (Debug) -->
-                <div class="border-t border-gray-200 pt-4">
-                    <button onclick="document.getElementById('raw-output-area').classList.toggle('hidden')"
-                        class="text-xs text-gray-400 hover:text-indigo-500 underline focus:outline-none">
-                        Show Raw AI Response (Debug)
-                    </button>
-                    <pre id="raw-output-area"
-                        class="hidden mt-2 p-4 bg-gray-900 text-green-400 font-mono text-xs rounded-lg overflow-x-auto whitespace-pre-wrap"></pre>
-                </div>
-
-                <!-- 5. Chat with the Analyzer -->
-                <div class="border-t border-gray-200 pt-6 mt-6">
-                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        Chat with the Analyzer
-                    </h3>
-                    <p class="text-xs text-gray-500 mb-3 italic">Ask follow-up questions about your report. Example:
-                        "Why is my MCV low?"</p>
-
-                    <!-- Chat Messages Area -->
-                    <div id="chat-messages"
-                        class="bg-gray-50 rounded-lg border border-gray-200 p-4 h-72 overflow-y-auto mb-3 space-y-2">
-                        <!-- Chat bubbles will be added here by JS -->
-                    </div>
-
-                    <!-- Chat Input -->
-                    <div class="flex gap-2">
-                        <input type="text" id="chat-input"
-                            class="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm"
-                            placeholder="Ask a question about your report..." autocomplete="off">
-                        <button id="chat-send"
-                            class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center">
-                            <span>Send</span>
-                            <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <!-- 5. Chat Interface -->
+            <div
+                class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[600px] mb-8">
+                <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Chat with Analyzer</h3>
+                            <p class="text-xs text-slate-500">Ask about your results, terms, or advice</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30 custom-scrollbar">
+                    <!-- Chat bubbles -->
+                </div>
+
+                <div class="p-4 bg-white border-t border-slate-100">
+                    <div class="flex gap-2 relative">
+                        <input type="text" id="chat-input"
+                            class="flex-1 pl-4 pr-12 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm shadow-sm transition-all"
+                            placeholder="Type your question..." autocomplete="off">
+                        <button id="chat-send"
+                            class="absolute right-2 top-1.5 bottom-1.5 px-4 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center">
+                            <svg class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                             </svg>
                         </button>
                     </div>
                 </div>
             </div>
-        </main>
 
-        <footer class="bg-gray-50 border-t border-gray-100 p-4 text-center">
-            <p class="text-xs text-gray-400">© 2025 Mini Blood Report Analyzer. Privacy Focused. Local Processing.</p>
-        </footer>
-    </div>
+            <!-- Debug Toggle -->
+            <div class="text-center pb-8 opacity-60 hover:opacity-100 transition-opacity">
+                <button onclick="document.getElementById('raw-output-area').classList.toggle('hidden')"
+                    class="text-xs text-slate-400 hover:text-brand-600 font-medium underline">
+                    Debug: Show Raw AI Output
+                </button>
+                <div class="max-w-5xl mx-auto mt-4 px-4 text-left">
+                    <pre id="raw-output-area"
+                        class="hidden p-4 bg-slate-900/95 text-emerald-400 font-mono text-xs rounded-xl overflow-x-auto shadow-inner border border-slate-800 max-h-64 custom-scrollbar"></pre>
+                </div>
+            </div>
+
+        </div>
+    </main>
 
     <script>
         // --- Configuration ---
-        const DEFAULT_API_MODEL = 'gemini-1.5-flash'; // Or 'gemini-pro' depending on availability
+        const DEFAULT_API_MODEL = 'gemini-1.5-flash';
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
 
         // --- DOM Elements ---
@@ -335,19 +398,21 @@
 
         // --- State ---
         let selectedFile = null;
-        let reportText = '';     // Full extracted PDF text for chat context
-        let chatHistory = [];    // Array of { role: 'user' | 'assistant', content: string }
+        let reportText = '';
+        let chatHistory = [];
 
         // --- Event Listeners ---
         els.pdfFile.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
                 selectedFile = e.target.files[0];
                 els.fileLabel.textContent = selectedFile.name;
-                els.fileLabel.classList.add('text-indigo-600');
+                els.fileLabel.classList.add('text-brand-600', 'font-semibold');
+                els.fileLabel.classList.remove('text-slate-500');
             } else {
                 selectedFile = null;
-                els.fileLabel.textContent = "Choose file...";
-                els.fileLabel.classList.remove('text-indigo-600');
+                els.fileLabel.textContent = "Select PDF File...";
+                els.fileLabel.classList.remove('text-brand-600', 'font-semibold');
+                els.fileLabel.classList.add('text-slate-500');
             }
         });
 
@@ -357,7 +422,7 @@
 
             const apiKey = els.apiKey.value.trim();
 
-            if (!apiKey) return showError('Please enter your Gemini API key.');
+            if (!apiKey) return showError('Please enter your OpenRouter API key.');
             if (!selectedFile) return showError('Please select a PDF file.');
             if (selectedFile.type !== 'application/pdf') return showError('Please select a valid PDF file.');
 
@@ -402,6 +467,45 @@
             }
         });
 
+        // Chat Event Listeners
+        els.chatSendBtn.addEventListener('click', handleChatSend);
+        els.chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleChatSend();
+        });
+
+        async function handleChatSend() {
+            const userQuestion = els.chatInput.value.trim();
+            if (!userQuestion) return;
+
+            const apiKey = els.apiKey.value.trim();
+            if (!apiKey) {
+                showError('API Key missing for chat.');
+                return;
+            }
+            if (!reportText) {
+                showError('No report analyzed yet.');
+                return;
+            }
+
+            // UI Updates
+            addChatMessage('user', userQuestion);
+            chatHistory.push({ role: 'user', content: userQuestion });
+            els.chatInput.value = '';
+            setChatLoading(true);
+
+            try {
+                const reply = await callChatApi(apiKey, reportText, chatHistory, userQuestion);
+                const cleanedReply = sanitizeForDisplay(reply);
+                addChatMessage('assistant', cleanedReply);
+                chatHistory.push({ role: 'assistant', content: cleanedReply });
+            } catch (error) {
+                console.error('Chat error:', error);
+                addChatMessage('assistant', "I'm having trouble responding right now. Please try again.");
+            } finally {
+                setChatLoading(false);
+            }
+        }
+
         // --- Logic Functions ---
 
         function setLoading(isLoading) {
@@ -416,9 +520,29 @@
             }
         }
 
+        function setChatLoading(isLoading) {
+            els.chatInput.disabled = isLoading;
+            els.chatSendBtn.disabled = isLoading;
+            const originalIcon = `<svg class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>`;
+            if (isLoading) {
+                els.chatSendBtn.innerHTML = `
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                `;
+            } else {
+                els.chatSendBtn.innerHTML = originalIcon;
+            }
+        }
+
         function showError(msg) {
             els.errorText.textContent = msg;
             els.errorMessage.classList.remove('hidden');
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                els.errorMessage.classList.add('hidden');
+            }, 5000);
         }
 
         function clearError() {
@@ -432,7 +556,6 @@
                     try {
                         const pdf = await pdfjsLib.getDocument({ data: event.target.result }).promise;
                         let allText = '';
-                        // Limit pages to avoid huge payloads if user uploads a book
                         const maxPages = Math.min(pdf.numPages, 5);
                         for (let i = 1; i <= maxPages; i++) {
                             const page = await pdf.getPage(i);
@@ -451,11 +574,7 @@
         }
 
         async function callGeminiApi(apiKey, text) {
-            // NOTE: Function name kept as 'callGeminiApi' for compatibility with existing event listeners,
-            // but internally it now calls OpenRouter.
-
             const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-            // Using a free model as requested. 
             const MODEL = "nvidia/nemotron-nano-12b-v2-vl:free";
 
             const systemPrompt = `
@@ -531,12 +650,9 @@ IMPORTANT:
                     { role: "user", content: `INPUT TEXT:\n${text}` }
                 ],
                 temperature: 0.2,
-                max_tokens: 2500 // Increased limit for completeness
+                max_tokens: 2500
             };
 
-            console.log("Calling OpenRouter with model:", MODEL);
-
-            // Sanitize API Key to ensure no non-ASCII characters (common copy-paste issue)
             const sanitizedKey = apiKey.replace(/[^\x00-\x7F]/g, "").trim();
 
             const response = await fetch(OPENROUTER_API_URL, {
@@ -557,13 +673,12 @@ IMPORTANT:
                     if (errData.error && errData.error.message) {
                         errorMsg = `OpenRouter Error: ${errData.error.message}`;
                     }
-                } catch (e) { /* ignore parse error */ }
+                } catch (e) { }
                 throw new Error(errorMsg);
             }
 
             const data = await response.json();
 
-            // OpenRouter/OpenAI format: data.choices[0].message.content
             if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
                 throw new Error("Empty response from AI.");
             }
@@ -571,45 +686,77 @@ IMPORTANT:
             return data.choices[0].message.content;
         }
 
+        async function callChatApi(apiKey, reportContext, history, userQuestion) {
+            const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+            const MODEL = "nvidia/nemotron-nano-12b-v2-vl:free";
+
+            // Limit context to roughly first 3000 chars to avoid token limits
+            const truncatedContext = reportContext.substring(0, 3000);
+
+            const systemPrompt = `
+You are a helpful medical assistant. The user has provided a blood report.
+Use the following report text as context to answer their questions:
+---
+${truncatedContext}
+---
+RULES:
+1. Answer in simple, easy-to-understand language.
+2. Keep answers short and concise (max 3-4 sentences).
+3. Do NOT diagnose or prescribe anything.
+4. Always clearly state that you are an AI and not a doctor.
+5. If the question is unrelated to the report or health, politely decline.
+6. Do NOT use Markdown formatting (no bold, no italics, no lists). Plain text only.
+`;
+
+            // Construct messages array from history
+            const messages = [
+                { role: "system", content: systemPrompt },
+                ...history,
+                { role: "user", content: userQuestion }
+            ];
+
+            const sanitizedKey = apiKey.replace(/[^\x00-\x7F]/g, "").trim();
+
+            const response = await fetch(OPENROUTER_API_URL, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${sanitizedKey}`,
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://mini-blood-report-analyzer.vercel.app",
+                    "X-Title": "Mini Blood Report Analyzer"
+                },
+                body: JSON.stringify({
+                    model: MODEL,
+                    messages: messages,
+                    temperature: 0.4,
+                    max_tokens: 800
+                })
+            });
+
+            if (!response.ok) throw new Error("Chat API failed");
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
         function sanitizeForDisplay(text) {
             if (!text) return '';
-            // First run through cleanAiText to remove Markdown patterns
             text = cleanAiText(text);
-            // Extra safety: remove any remaining asterisks or stray markdown chars
             text = text.replace(/\*/g, '');
             return text.trim();
         }
 
         function cleanAiText(raw) {
             if (!raw) return '';
-
             let text = raw;
-
-            // 1) Remove code fences `````` (any language)
             text = text.replace(/``````/g, '');
-
-            // 2) Remove Markdown headings like "# Heading", "### Heading"
             text = text.replace(/^\s{0,3}#{1,6}\s*/gm, '');
-
-            // 3) Remove bullet markers at start of line: -, *, +
-            //    Covers "- item", "* item", "+ item"
             text = text.replace(/^\s*[-*+]\s+/gm, '');
-
-            // 4) Remove bold/italic markers:
-            //    **text**, __text__, *text*, _text_
-            text = text.replace(/(\*\*|__)/g, '');                               // **, __
-            text = text.replace(/(^|[\s])\*(.+?)\*(?=[\s]|$)/g, '$1$2');         // *text*
-            text = text.replace(/(^|[\s])_(.+?)_(?=[\s]|$)/g, '$1$2');           // _text_
-
-            // 5) Normalize whitespace
-            //    - Collapse multiple spaces
+            text = text.replace(/(\*\*|__)/g, '');
+            text = text.replace(/(^|[\s])\*(.+?)\*(?=[\s]|$)/g, '$1$2');
+            text = text.replace(/(^|[\s])_(.+?)_(?=[\s]|$)/g, '$1$2');
             text = text.replace(/[ \t]+/g, ' ');
-            //    - Trim trailing spaces on each line
             text = text.replace(/[ \t]+$/gm, '');
-
-            // 6) Collapse 3+ blank lines to a single blank line
             text = text.replace(/\n{3,}/g, '\n\n');
-
             return text.trim();
         }
 
@@ -624,10 +771,8 @@ IMPORTANT:
             };
 
             let textNorm = text || '';
-
-            // Fix common heading issues and insert line breaks around section titles
+            // Insert breaks around sections to ensure reliable splitting
             textNorm = textNorm.replace(/OVERALLHEALTH SUMMARY/gi, 'OVERALL HEALTH SUMMARY');
-
             textNorm = textNorm
                 .replace(/DISCLAIMER\s*/gi, '\nDISCLAIMER\n')
                 .replace(/OVERALL HEALTH SUMMARY\s*/gi, '\nOVERALL HEALTH SUMMARY\n')
@@ -638,26 +783,21 @@ IMPORTANT:
             const lines = textNorm.split('\n').map(l => l.trim()).filter(l => l);
             let currentSection = '';
 
-            // Regex patterns
             const scoreRegex = /Overall Health Score:?\s*(\d+)\/100/i;
             const categoryRegex = /Category:?\s*(.*)/i;
-            // Relaxed Key Number Regex
             const keyNumRegex = /^(.*?):\s*(.*?)\s*\((?:Normal|normal):\s*(.*?)\)\s*->\s*(?:Status:\s*)?(.*)$/;
             const keyNumSimpleRegex = /^(.*?):\s*(.*?)\s*->\s*(.*)$/;
 
             for (let line of lines) {
-                // Section Detection
-                if (line.includes('DISCLAIMER')) { currentSection = 'DISCLAIMER'; continue; } // Added disclaimer section
+                if (line.includes('DISCLAIMER')) { currentSection = 'DISCLAIMER'; continue; }
                 if (line.includes('OVERALL HEALTH SUMMARY')) { currentSection = 'SUMMARY'; continue; }
                 if (line.includes('KEY NUMBERS')) { currentSection = 'NUMBERS'; continue; }
                 if (line.includes('DETAILED EXPLANATION')) { currentSection = 'EXPLANATION'; continue; }
                 if (line.includes('GENERAL WELLNESS TIPS')) { currentSection = 'TIPS'; continue; }
-                // if (line.includes('DISCLAIMER')) continue; // Removed as it's now a section
 
                 if (currentSection === 'SUMMARY') {
                     const scoreMatch = line.match(scoreRegex);
                     if (scoreMatch) result.score = parseInt(scoreMatch[1], 10);
-
                     const catMatch = line.match(categoryRegex);
                     if (catMatch) result.category = catMatch[1];
                 }
@@ -671,7 +811,6 @@ IMPORTANT:
                             status: match[4].trim()
                         });
                     } else {
-                        // Try simple fallback
                         const simpleMatch = line.match(keyNumSimpleRegex);
                         if (simpleMatch) {
                             result.keyNumbers.push({
@@ -684,24 +823,17 @@ IMPORTANT:
                     }
                 }
                 else if (currentSection === 'EXPLANATION') {
-                    // Avoid adding simple status lines or empty lines as explanation
                     if (line.length > 5) result.explanation.push(line);
                 }
                 else if (currentSection === 'TIPS') {
-                    // Remove leading numbers "1. "
                     result.tips.push(line.replace(/^\d+\.\s*/, ''));
                 }
             }
 
-            // Completeness Check
             let incomplete = false;
-            // Less than 3 key numbers likely means truncation (unless report is tiny, but usually we want at least header stuff)
             if (!result.keyNumbers || result.keyNumbers.length < 3) incomplete = true;
-            // Explanation usually has at least 2 paragraphs
             if (!result.explanation || result.explanation.length < 2) incomplete = true;
-            // Tips usually has at least 2-3 items
             if (!result.tips || result.tips.length < 2) incomplete = true;
-
             result.incomplete = incomplete;
 
             return result;
@@ -712,20 +844,21 @@ IMPORTANT:
             els.scoreDisplay.textContent = data.score;
             els.categoryBadge.textContent = data.category;
 
-            // Color Logic for Score
             const circle = els.scoreCircle;
-            const circumference = 2 * Math.PI * 56; // r=56
+            const circumference = 2 * Math.PI * 70; // r=70 (new radius)
+            // Fix svg calculation
             const offset = circumference - (data.score / 100) * circumference;
+            circle.style.strokeDasharray = circumference;
             circle.style.strokeDashoffset = offset;
 
-            let colorClass = 'text-yellow-500';
-            let bgClass = 'bg-yellow-100 text-yellow-800';
+            let colorClass = 'text-amber-500';
+            let bgClass = 'bg-amber-100 text-amber-800';
 
-            if (data.score >= 90) { colorClass = 'text-green-500'; bgClass = 'bg-green-100 text-green-800'; }
-            else if (data.score >= 75) { colorClass = 'text-emerald-500'; bgClass = 'bg-emerald-100 text-emerald-800'; }
-            else if (data.score >= 60) { colorClass = 'text-yellow-500'; bgClass = 'bg-yellow-100 text-yellow-800'; }
-            else if (data.score >= 40) { colorClass = 'text-orange-500'; bgClass = 'bg-orange-100 text-orange-800'; }
-            else { colorClass = 'text-red-600'; bgClass = 'bg-red-100 text-red-800'; }
+            if (data.score >= 90) { colorClass = 'text-emerald-500'; bgClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200'; }
+            else if (data.score >= 75) { colorClass = 'text-brand-500'; bgClass = 'bg-brand-50 text-brand-700 border border-brand-100'; }
+            else if (data.score >= 60) { colorClass = 'text-amber-500'; bgClass = 'bg-amber-50 text-amber-700 border border-amber-100'; }
+            else if (data.score >= 40) { colorClass = 'text-orange-500'; bgClass = 'bg-orange-50 text-orange-700 border border-orange-100'; }
+            else { colorClass = 'text-red-500'; bgClass = 'bg-red-50 text-red-700 border border-red-100'; }
 
             circle.setAttribute('class', `transform -rotate-90 transition-all duration-1000 ease-out ${colorClass}`);
             els.categoryBadge.className = `inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${bgClass}`;
@@ -733,44 +866,50 @@ IMPORTANT:
             // 2. Key Numbers
             els.keyNumbersBody.innerHTML = '';
             data.keyNumbers.forEach(item => {
-                let statusColor = 'text-gray-600 font-medium';
+                let statusBadge = '';
                 const s = item.status.toLowerCase();
-                if (s.includes('high')) statusColor = 'text-red-600 font-bold';
-                else if (s.includes('low')) statusColor = 'text-blue-600 font-bold';
-                else if (s.includes('normal')) statusColor = 'text-green-600 font-bold';
+
+                if (s.includes('high')) {
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-100">High</span>`;
+                } else if (s.includes('low')) {
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-100">Low</span>`;
+                } else if (s.includes('normal')) {
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-100">Normal</span>`;
+                } else {
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">${item.status}</span>`;
+                }
 
                 const row = `
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">${item.name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-700">${item.value}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-xs hidden sm:table-cell">${item.range}</td>
-                        <td class="px-6 py-4 whitespace-nowrap ${statusColor}">${item.status}</td>
+                    <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-50 last:border-0">
+                        <td class="px-6 py-4 whitespace-nowrap font-medium text-slate-900">${item.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-slate-700 font-semibold">${item.value}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-slate-400 text-xs hidden sm:table-cell font-mono">${item.range}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
                     </tr>
                 `;
                 els.keyNumbersBody.insertAdjacentHTML('beforeend', row);
             });
 
             // 3. Explanation
-            els.detailedExplanation.innerHTML = data.explanation.map(p => `<p>${p}</p>`).join('');
+            els.detailedExplanation.innerHTML = data.explanation.map(p => `<p class="mb-3 last:mb-0">${p}</p>`).join('');
 
-            // Incomplete Warning for Explanation
             if (data.incomplete) {
                 els.detailedExplanation.insertAdjacentHTML('beforeend',
-                    '<p class="mt-3 text-xs text-red-500 italic font-semibold border-t border-red-100 pt-2">⚠️ Note: AI response seems incomplete or truncated. You can try running the analysis again or checking specific test results above.</p>');
+                    '<div class="mt-4 p-3 bg-red-50 rounded-lg border border-red-100 text-xs text-red-600 font-medium flex items-center"><svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>Note: Analysis may be incomplete. Please verify with the original report.</div>');
             }
 
             // 4. Tips
             els.wellnessTips.innerHTML = data.tips.map((tip, idx) => `
-                <div class="flex items-start">
-                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold mt-0.5">
-                        ${idx + 1}
+                <div class="flex items-start p-3 bg-emerald-50/50 rounded-xl border border-emerald-100/50 hover:bg-emerald-50 transition-colors">
+                    <div class="flex-shrink-0 h-6 w-6 text-emerald-600 mt-0.5">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                     </div>
-                    <p class="ml-3 text-sm text-gray-600">${tip}</p>
+                    <p class="ml-3 text-sm text-slate-700 leading-relaxed">${tip}</p>
                 </div>
             `).join('');
         }
-
-        // --- Chat Functions ---
 
         function addChatMessage(role, content) {
             const container = els.chatMessages;
@@ -778,159 +917,20 @@ IMPORTANT:
 
             const bubble = document.createElement('div');
             bubble.className = isUser
-                ? 'flex justify-end mb-2'
-                : 'flex justify-start mb-2';
+                ? 'flex justify-end mb-4'
+                : 'flex justify-start mb-4';
 
             const inner = document.createElement('div');
             inner.className = isUser
-                ? 'max-w-[80%] bg-indigo-600 text-white rounded-2xl px-4 py-2.5 text-sm shadow-sm'
-                : 'max-w-[80%] bg-white text-gray-800 rounded-2xl px-4 py-2.5 text-sm shadow-sm border border-gray-100';
+                ? 'max-w-[85%] bg-brand-600 text-white rounded-2xl rounded-tr-sm px-5 py-3 text-sm shadow-md leading-relaxed'
+                : 'max-w-[85%] bg-white text-slate-700 rounded-2xl rounded-tl-sm px-5 py-3 text-sm shadow-sm border border-slate-100 leading-relaxed';
 
-            // Preserve line breaks in content
             inner.innerHTML = content.replace(/\n/g, '<br>');
             bubble.appendChild(inner);
             container.appendChild(bubble);
             container.scrollTop = container.scrollHeight;
         }
 
-        function setChatLoading(isLoading) {
-            els.chatInput.disabled = isLoading;
-            els.chatSendBtn.disabled = isLoading;
-            if (isLoading) {
-                els.chatSendBtn.innerHTML = `
-                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                `;
-            } else {
-                els.chatSendBtn.innerHTML = `
-                    <span>Send</span>
-                    <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                `;
-            }
-        }
-
-        async function callChatApi(apiKey, reportContext, history, userQuestion) {
-            const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-            const MODEL = "nvidia/nemotron-nano-12b-v2-vl:free";
-
-            // Truncate report if too long (keep first ~3000 chars for context)
-            const truncatedReport = reportContext.length > 3000
-                ? reportContext.substring(0, 3000) + '\n... [truncated for brevity]'
-                : reportContext;
-
-            const systemPrompt = `
-You are a helpful medical assistant AI. You have access to the following blood report text:
-
----BEGIN REPORT---
-${truncatedReport}
----END REPORT---
-
-Use this information to answer the user's follow-up questions in simple, safe language.
-
-RULES:
-- Be concise and helpful.
-- Explain medical terms in plain language.
-- Do NOT give diagnoses or treatment plans.
-- Always remind that a doctor should be consulted for medical decisions.
-- If the answer is not in the report, say so honestly.
-`;
-
-            // Build messages array with history
-            const messages = [
-                { role: "system", content: systemPrompt },
-                ...history,
-                { role: "user", content: userQuestion }
-            ];
-
-            const payload = {
-                model: MODEL,
-                messages: messages,
-                temperature: 0.4,
-                max_tokens: 800
-            };
-
-            const sanitizedKey = apiKey.replace(/[^\x00-\x7F]/g, "").trim();
-
-            const response = await fetch(OPENROUTER_API_URL, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${sanitizedKey}`,
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://mini-blood-report-analyzer.vercel.app",
-                    "X-Title": "Mini Blood Report Analyzer Chat"
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                let errorMsg = `API Error: ${response.status}`;
-                try {
-                    const errData = await response.json();
-                    if (errData.error && errData.error.message) {
-                        errorMsg = errData.error.message;
-                    }
-                } catch (e) { /* ignore */ }
-                throw new Error(errorMsg);
-            }
-
-            const data = await response.json();
-            if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
-                throw new Error("Empty response from AI.");
-            }
-
-            return data.choices[0].message.content.trim();
-        }
-
-        async function handleChatSend() {
-            const apiKey = els.apiKey.value.trim();
-            const userQuestion = els.chatInput.value.trim();
-
-            // Validations
-            if (!reportText) {
-                addChatMessage('assistant', "Please upload and analyze a report first before chatting.");
-                return;
-            }
-            if (!apiKey) {
-                addChatMessage('assistant', "Please enter your OpenRouter API key above.");
-                return;
-            }
-            if (!userQuestion) {
-                return; // Ignore empty input
-            }
-
-            // Add user message to UI and history
-            addChatMessage('user', userQuestion);
-            chatHistory.push({ role: 'user', content: userQuestion });
-            els.chatInput.value = '';
-
-            setChatLoading(true);
-
-            try {
-                const reply = await callChatApi(apiKey, reportText, chatHistory, userQuestion);
-                const cleanedReply = sanitizeForDisplay(reply);
-                addChatMessage('assistant', cleanedReply);
-                chatHistory.push({ role: 'assistant', content: cleanedReply });
-            } catch (error) {
-                console.error('Chat error:', error);
-                addChatMessage('assistant', "I'm having trouble responding right now. Please try again.");
-            } finally {
-                setChatLoading(false);
-                els.chatInput.focus();
-            }
-        }
-
-        // --- Chat Event Listeners ---
-        els.chatSendBtn.addEventListener('click', handleChatSend);
-        els.chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleChatSend();
-            }
-        });
     </script>
 </body>
 
