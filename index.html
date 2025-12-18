@@ -1,158 +1,428 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mini Blood Report Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-    <!-- Added Showdown.js to render Markdown -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        /* Custom scrollbar for raw output */
+        pre::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        pre::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+            border-radius: 4px;
+        }
+
+        pre::-webkit-scrollbar-track {
+            background-color: #1f2937;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white shadow-lg rounded-lg p-8 max-w-2xl w-full">
-        <h1 class="text-2xl font-bold text-center mb-6">Mini Blood Report Analyzer 🩺</h1>
 
-        <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong class="font-bold">Error:</strong>
-            <span class="block sm:inline" id="error-text"></span>
-        </div>
+<body class="bg-gray-50 min-h-screen py-8 px-4 font-sans text-gray-800">
 
-        <div class="space-y-4">
-            <div>
-                <label for="apiKey" class="block text-sm font-medium text-gray-700">Gemini API Key</label>
-                <input type="password" id="apiKey" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Paste your API key here">
+    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+        <!-- Minimal Vercel Config hint -->
+        <!-- 
+         vercel.json (optional):
+         {
+           "headers": [
+             { "source": "/(.*)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" } ] }
+           ]
+         }
+        -->
+
+        <!-- Header -->
+        <header class="bg-indigo-600 p-6 text-center">
+            <h1 class="text-3xl font-extrabold text-white tracking-wide">Mini Blood Report Analyzer 🩺</h1>
+            <p class="text-indigo-100 mt-2 text-sm font-medium">AI-Powered Educational Insights (via OpenRouter Free
+                Models)</p>
+            <div class="mt-2 bg-indigo-700/50 inline-block px-3 py-1 rounded-full border border-indigo-400/30">
+                <p class="text-xs text-indigo-50 font-medium">⚠️ Educational Demo Only. Not Medical Advice.</p>
+            </div>
+        </header>
+
+        <main class="p-8">
+            <!-- Error Alert -->
+            <div id="error-message"
+                class="hidden mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm animate-pulse"
+                role="alert">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700" id="error-text">Something went wrong.</p>
+                    </div>
+                </div>
             </div>
 
-            <div>
-                <label for="pdfFile" class="block text-sm font-medium text-gray-700">Blood Report PDF</label>
-                <input type="file" id="pdfFile" accept="application/pdf" class="mt-1 block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-md file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-indigo-50 file:text-indigo-600
-                    hover:file:bg-indigo-100
-                "/>
+            <!-- Input Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- API Key Input -->
+                <div class="relative group">
+                    <label for="apiKey"
+                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">OpenRouter API
+                        Key</label>
+                    <div class="relative">
+                        <input type="password" id="apiKey"
+                            class="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm shadow-sm"
+                            placeholder="sk-..." autocomplete="off">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Input -->
+                <div class="relative group">
+                    <label for="pdfFile"
+                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Upload Report
+                        (PDF)</label>
+                    <label
+                        class="flex flex-col items-center justify-center w-full h-[46px] border border-gray-200 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <span id="file-label"
+                                class="text-sm text-gray-500 font-medium truncate max-w-[150px]">Choose file...</span>
+                        </div>
+                        <input id="pdfFile" type="file" class="hidden" accept="application/pdf" />
+                    </label>
+                </div>
             </div>
 
-            <button id="analyzeBtn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <span id="button-text">Analyze Report</span>
-                <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+            <!-- Analyze Button -->
+            <button id="analyzeBtn"
+                class="w-full relative flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-[0.99] overflow-hidden">
+                <span id="button-text" class="flex items-center">
+                    ANALYZE REPORT <span class="ml-2">➔</span>
+                </span>
+                <div id="loading-spinner"
+                    class="absolute inset-0 flex items-center justify-center bg-indigo-600 hidden">
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <span class="ml-2 text-indigo-100 font-medium">Processing...</span>
+                </div>
             </button>
-        </div>
 
-        <div id="results-container" class="mt-8 hidden">
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Analysis Results</h2>
-            <!-- Added prose class for clean typography from Tailwind -->
-            <div id="results" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md border"></div>
-        </div>
+            <!-- Results Dashboard -->
+            <div id="results-container" class="mt-10 hidden space-y-8 animate-fade-in-up">
+
+                <!-- 1. Health Score Card -->
+                <div
+                    class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-50 rounded-full blur-2xl opacity-50">
+                    </div>
+
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b border-gray-200 pb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+                        </svg>
+                        Overall Health Snapshot
+                    </h2>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-between">
+                        <!-- Score Circle -->
+                        <div class="flex-shrink-0 mb-4 sm:mb-0">
+                            <div class="relative flex items-center justify-center w-32 h-32">
+                                <svg class="w-full h-full transform -rotate-90">
+                                    <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="10"
+                                        fill="transparent" class="text-gray-200" />
+                                    <circle id="score-circle" cx="64" cy="64" r="56" stroke="currentColor"
+                                        stroke-width="10" fill="transparent" stroke-linecap="round"
+                                        class="text-indigo-600 transition-all duration-1000 ease-out"
+                                        stroke-dasharray="351.86" stroke-dashoffset="351.86" />
+                                </svg>
+                                <span id="health-score-display"
+                                    class="absolute text-3xl font-black text-gray-800">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Category Info -->
+                        <div class="ml-0 sm:ml-8 flex-1 text-center sm:text-left">
+                            <div class="text-sm text-gray-500 uppercase font-semibold tracking-wide mb-1">Health
+                                Category</div>
+                            <div id="health-category-badge"
+                                class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold bg-gray-200 text-gray-700">
+                                Analyzing...
+                            </div>
+                            <p class="mt-3 text-sm text-gray-600 italic">"Based on the extracted test results from your
+                                PDF."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Key Numbers Table -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        Key Biomarkers
+                    </h3>
+                    <div class="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        Test Name</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        Result</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                                        Average Range</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="key-numbers-body" class="bg-white divide-y divide-gray-200 text-sm">
+                                <!-- JS will populate rows here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. Detailed Explanation -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Detailed Analysis
+                    </h3>
+                    <div id="detailed-explanation"
+                        class="bg-blue-50/50 rounded-lg p-6 border border-blue-100 text-gray-700 leading-relaxed space-y-3 shadow-inner">
+                        <!-- Prose content -->
+                    </div>
+                </div>
+
+                <!-- 4. General Wellness Tips -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Wellness Tips
+                    </h3>
+                    <div id="wellness-tips" class="space-y-3">
+                        <!-- Tips Cards populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Collapsible Raw Data (Debug) -->
+                <div class="border-t border-gray-200 pt-4">
+                    <button onclick="document.getElementById('raw-output-area').classList.toggle('hidden')"
+                        class="text-xs text-gray-400 hover:text-indigo-500 underline focus:outline-none">
+                        Show Raw AI Response (Debug)
+                    </button>
+                    <pre id="raw-output-area"
+                        class="hidden mt-2 p-4 bg-gray-900 text-green-400 font-mono text-xs rounded-lg overflow-x-auto whitespace-pre-wrap"></pre>
+                </div>
+
+                <!-- 5. Chat with the Analyzer -->
+                <div class="border-t border-gray-200 pt-6 mt-6">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        Chat with the Analyzer
+                    </h3>
+                    <p class="text-xs text-gray-500 mb-3 italic">Ask follow-up questions about your report. Example:
+                        "Why is my MCV low?"</p>
+
+                    <!-- Chat Messages Area -->
+                    <div id="chat-messages"
+                        class="bg-gray-50 rounded-lg border border-gray-200 p-4 h-72 overflow-y-auto mb-3 space-y-2">
+                        <!-- Chat bubbles will be added here by JS -->
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="flex gap-2">
+                        <input type="text" id="chat-input"
+                            class="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm"
+                            placeholder="Ask a question about your report..." autocomplete="off">
+                        <button id="chat-send"
+                            class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center">
+                            <span>Send</span>
+                            <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-gray-50 border-t border-gray-100 p-4 text-center">
+            <p class="text-xs text-gray-400">© 2025 Mini Blood Report Analyzer. Privacy Focused. Local Processing.</p>
+        </footer>
     </div>
 
     <script>
-        const apiKeyInput = document.getElementById('apiKey');
-        const pdfFileInput = document.getElementById('pdfFile');
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const buttonText = document.getElementById('button-text');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const errorMessage = document.getElementById('error-message');
-        const errorText = document.getElementById('error-text');
-        const resultsContainer = document.getElementById('results-container');
-        const resultsDiv = document.getElementById('results');
-
-        // Initialize the Markdown converter
-        const converter = new showdown.Converter();
-
+        // --- Configuration ---
+        const DEFAULT_API_MODEL = 'gemini-1.5-flash'; // Or 'gemini-pro' depending on availability
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
 
-        function showError(message) {
-            errorText.textContent = message;
-            errorMessage.classList.remove('hidden');
-        }
+        // --- DOM Elements ---
+        const els = {
+            apiKey: document.getElementById('apiKey'),
+            pdfFile: document.getElementById('pdfFile'),
+            fileLabel: document.getElementById('file-label'),
+            analyzeBtn: document.getElementById('analyzeBtn'),
+            loadingSpinner: document.getElementById('loading-spinner'),
+            errorMessage: document.getElementById('error-message'),
+            errorText: document.getElementById('error-text'),
+            resultsContainer: document.getElementById('results-container'),
+            scoreCircle: document.getElementById('score-circle'),
+            scoreDisplay: document.getElementById('health-score-display'),
+            categoryBadge: document.getElementById('health-category-badge'),
+            keyNumbersBody: document.getElementById('key-numbers-body'),
+            detailedExplanation: document.getElementById('detailed-explanation'),
+            wellnessTips: document.getElementById('wellness-tips'),
+            rawOutput: document.getElementById('raw-output-area'),
+            chatMessages: document.getElementById('chat-messages'),
+            chatInput: document.getElementById('chat-input'),
+            chatSendBtn: document.getElementById('chat-send')
+        };
 
-        function clearError() {
-            errorMessage.classList.add('hidden');
-        }
+        // --- State ---
+        let selectedFile = null;
+        let reportText = '';     // Full extracted PDF text for chat context
+        let chatHistory = [];    // Array of { role: 'user' | 'assistant', content: string }
 
-        function setLoading(isLoading) {
-            if (isLoading) {
-                buttonText.classList.add('hidden');
-                loadingSpinner.classList.remove('hidden');
-                analyzeBtn.disabled = true;
+        // --- Event Listeners ---
+        els.pdfFile.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                selectedFile = e.target.files[0];
+                els.fileLabel.textContent = selectedFile.name;
+                els.fileLabel.classList.add('text-indigo-600');
             } else {
-                buttonText.classList.remove('hidden');
-                loadingSpinner.classList.add('hidden');
-                analyzeBtn.disabled = false;
+                selectedFile = null;
+                els.fileLabel.textContent = "Choose file...";
+                els.fileLabel.classList.remove('text-indigo-600');
             }
-        }
+        });
 
-        analyzeBtn.addEventListener('click', async () => {
+        els.analyzeBtn.addEventListener('click', async () => {
             clearError();
-            resultsContainer.classList.add('hidden');
-            const apiKey = apiKeyInput.value.trim();
-            const pdfFile = pdfFileInput.files[0];
+            els.resultsContainer.classList.add('hidden');
 
-            if (!apiKey) {
-                showError('Please enter your Gemini API key.');
-                return;
-            }
+            const apiKey = els.apiKey.value.trim();
 
-            if (!pdfFile) {
-                showError('Please select a PDF file.');
-                return;
-            }
-
-            if (pdfFile.type !== 'application/pdf') {
-                showError('Please select a valid PDF file.');
-                return;
-            }
+            if (!apiKey) return showError('Please enter your Gemini API key.');
+            if (!selectedFile) return showError('Please select a PDF file.');
+            if (selectedFile.type !== 'application/pdf') return showError('Please select a valid PDF file.');
 
             setLoading(true);
+
             try {
-                const pdfText = await extractTextFromPdf(pdfFile);
-                const analysis = await callGeminiApi(apiKey, pdfText);
-                // --- FIX IS HERE ---
-                // Convert Markdown response to clean HTML before displaying
-                resultsDiv.innerHTML = converter.makeHtml(analysis);
-                resultsContainer.classList.remove('hidden');
+                // 1. Extract Text
+                const pdfText = await extractTextFromPdf(selectedFile);
+                if (pdfText.length < 50) throw new Error("Could not extract enough text from this PDF. It might be an image scan.");
+
+                // 2. Call AI
+                const rawAnalysis = await callGeminiApi(apiKey, pdfText);
+
+                // 3. Clean & Parse
+                const cleanedText = sanitizeForDisplay(rawAnalysis);
+                els.rawOutput.textContent = cleanedText; // Debug view
+
+                const parsedData = parseAnalysisSections(cleanedText);
+
+                // 4. Render
+                renderParsedResults(parsedData);
+                els.resultsContainer.classList.remove('hidden');
+
+                // 5. Enable Chat - Store report text and reset chat history
+                reportText = pdfText;
+                chatHistory = [];
+                els.chatMessages.innerHTML = '';
+
+                // Add initial assistant message
+                const welcomeMsg = `I've analyzed your blood report. You can now ask me follow-up questions like:\n- "Why is my hemoglobin low?"\n- "What does MCV mean?"\n- "Summarize my results in 2 sentences."`;
+                addChatMessage('assistant', welcomeMsg);
+                chatHistory.push({ role: 'assistant', content: welcomeMsg });
+
+                // Scroll to results
+                els.resultsContainer.scrollIntoView({ behavior: 'smooth' });
+
             } catch (error) {
-                showError(`${error.message}`);
+                console.error(error);
+                showError(error.message || 'An unexpected error occurred.');
             } finally {
                 setLoading(false);
             }
         });
 
-        async function callGeminiApi(apiKey, text) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-            
-            const prompt = `You are an expert medical analyst AI. Analyze the provided blood report text. Identify key biomarkers, compare their values to the normal ranges given in the text, and determine if they are high, low, or normal. Summarize the findings in simple, easy-to-understand language for a non-medical person. Organize the results clearly and start with a bold disclaimer: DISCLAIMER: This is an AI analysis and not medical advice. Consult a doctor. Here is the report text:\n\n${text}`;
+        // --- Logic Functions ---
 
-            const payload = {
-                contents: [{
-                    parts: [{ text: prompt }]
-                }]
-            };
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error.message || 'API call failed');
+        function setLoading(isLoading) {
+            if (isLoading) {
+                els.analyzeBtn.disabled = true;
+                els.loadingSpinner.classList.remove('hidden');
+                document.getElementById('button-text').classList.add('opacity-0');
+            } else {
+                els.analyzeBtn.disabled = false;
+                els.loadingSpinner.classList.add('hidden');
+                document.getElementById('button-text').classList.remove('opacity-0');
             }
+        }
 
-            const data = await response.json();
-            if (!data.candidates || !data.candidates[0].content.parts[0].text) {
-                throw new Error('Invalid response from API.');
-            }
-            return data.candidates[0].content.parts[0].text;
+        function showError(msg) {
+            els.errorText.textContent = msg;
+            els.errorMessage.classList.remove('hidden');
+        }
+
+        function clearError() {
+            els.errorMessage.classList.add('hidden');
         }
 
         async function extractTextFromPdf(file) {
@@ -162,22 +432,506 @@
                     try {
                         const pdf = await pdfjsLib.getDocument({ data: event.target.result }).promise;
                         let allText = '';
-                        for (let i = 1; i <= pdf.numPages; i++) {
+                        // Limit pages to avoid huge payloads if user uploads a book
+                        const maxPages = Math.min(pdf.numPages, 5);
+                        for (let i = 1; i <= maxPages; i++) {
                             const page = await pdf.getPage(i);
                             const textContent = await page.getTextContent();
                             const pageText = textContent.items.map(item => item.str).join(' ');
-                            allText += pageText + '\n\n';
+                            allText += `Page ${i}:\n${pageText}\n\n`;
                         }
                         resolve(allText);
                     } catch (error) {
-                        reject(error);
+                        reject(new Error("Failed to parse PDF. Ensure it is a valid text-based PDF."));
                     }
                 };
-                reader.onerror = (error) => reject(error);
+                reader.onerror = () => reject(new Error("File reading failed."));
                 reader.readAsArrayBuffer(file);
             });
         }
+
+        async function callGeminiApi(apiKey, text) {
+            // NOTE: Function name kept as 'callGeminiApi' for compatibility with existing event listeners,
+            // but internally it now calls OpenRouter.
+
+            const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+            // Using a free model as requested. 
+            const MODEL = "nvidia/nemotron-nano-12b-v2-vl:free";
+
+            const systemPrompt = `
+You are a medical data assistant. Your job is to extract data from a blood report PDF text and output it in a STRICT plain text format.
+
+INSTRUCTIONS:
+1. Clean noise (headers/footers).
+2. Extract key biomarkers.
+3. Compare values to reference ranges.
+4. Calculate an estimated 'Overall Health Score' (0-100).
+5. Assign a Category: Excellent (90-100), Good (75-89), Moderate (60-74), Needs Attention (40-59), Critical (0-39).
+6. Provide a Detailed Explanation of abnormal results.
+7. Provide 3-5 Wellness Tips.
+
+You must always output ALL five sections: DISCLAIMER, OVERALL HEALTH SUMMARY, KEY NUMBERS, DETAILED EXPLANATION, GENERAL WELLNESS TIPS.
+Under KEY NUMBERS, include as many tests as you can find in the input (at least 10 if available).
+DETAILED EXPLANATION must contain 3–8 short paragraphs.
+GENERAL WELLNESS TIPS must contain 3–5 numbered tips.
+
+FORMAT RULES (VERY IMPORTANT):
+- Write in simple, conversational sentences, as if calmly explaining to a non-medical person.
+- Do NOT use Markdown: no headings (no # or ###), no bold or italics (no ** or _), no bullet points (no -, * or numbered lists).
+- Do NOT use code blocks.
+- Do NOT use emojis.
+- Instead of bullets or headings, write short paragraphs separated by blank lines.
+- The output must be plain text only.
+
+Example of the style you must follow:
+
+Low MCV means your red blood cells are smaller than usual. This is often seen in conditions such as iron deficiency or some inherited blood conditions.
+
+Your result alone does not confirm any disease. A doctor will look at all of your blood values together and your symptoms before deciding what it means for you.
+
+Always discuss these results with a healthcare provider. Only they can diagnose you or suggest treatment.
+
+If you run out of space, prioritize completing KEY NUMBERS first, then at least 3 paragraphs of DETAILED EXPLANATION, then 3 wellness tips.
+
+OUTPUT FORMAT (Strictly follow this EXACTLY, including line breaks):
+
+DISCLAIMER
+[One short disclaimer paragraph]
+
+OVERALL HEALTH SUMMARY
+Overall Health Score: [Number]/100
+Category: [Category Name]
+
+KEY NUMBERS
+[Test Name]: [Value] [Unit] (Normal: [Range]) -> [Status: Low/Normal/High]
+[Test Name]: [Value] [Unit] (Normal: [Range]) -> [Status: Low/Normal/High]
+...
+
+DETAILED EXPLANATION
+[Paragraph 1]
+[Paragraph 2]
+...
+
+GENERAL WELLNESS TIPS
+1. [Tip 1]
+2. [Tip 2]
+3. [Tip 3]
+
+IMPORTANT:
+- Put each section title on its OWN LINE, exactly as written above.
+- Do NOT merge headings and content on the same line.
+- Plain text only (no Markdown, no bullets, no emojis, no code blocks).
+- Do not invent tests that are not present in the input.
+`;
+
+            const payload = {
+                model: MODEL,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: `INPUT TEXT:\n${text}` }
+                ],
+                temperature: 0.2,
+                max_tokens: 2500 // Increased limit for completeness
+            };
+
+            console.log("Calling OpenRouter with model:", MODEL);
+
+            // Sanitize API Key to ensure no non-ASCII characters (common copy-paste issue)
+            const sanitizedKey = apiKey.replace(/[^\x00-\x7F]/g, "").trim();
+
+            const response = await fetch(OPENROUTER_API_URL, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${sanitizedKey}`,
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://mini-blood-report-analyzer.vercel.app",
+                    "X-Title": "Mini Blood Report Analyzer"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                let errorMsg = `API Error: ${response.status} (${response.statusText})`;
+                try {
+                    const errData = await response.json();
+                    if (errData.error && errData.error.message) {
+                        errorMsg = `OpenRouter Error: ${errData.error.message}`;
+                    }
+                } catch (e) { /* ignore parse error */ }
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+
+            // OpenRouter/OpenAI format: data.choices[0].message.content
+            if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+                throw new Error("Empty response from AI.");
+            }
+
+            return data.choices[0].message.content;
+        }
+
+        function sanitizeForDisplay(text) {
+            if (!text) return '';
+            // First run through cleanAiText to remove Markdown patterns
+            text = cleanAiText(text);
+            // Extra safety: remove any remaining asterisks or stray markdown chars
+            text = text.replace(/\*/g, '');
+            return text.trim();
+        }
+
+        function cleanAiText(raw) {
+            if (!raw) return '';
+
+            let text = raw;
+
+            // 1) Remove code fences `````` (any language)
+            text = text.replace(/``````/g, '');
+
+            // 2) Remove Markdown headings like "# Heading", "### Heading"
+            text = text.replace(/^\s{0,3}#{1,6}\s*/gm, '');
+
+            // 3) Remove bullet markers at start of line: -, *, +
+            //    Covers "- item", "* item", "+ item"
+            text = text.replace(/^\s*[-*+]\s+/gm, '');
+
+            // 4) Remove bold/italic markers:
+            //    **text**, __text__, *text*, _text_
+            text = text.replace(/(\*\*|__)/g, '');                               // **, __
+            text = text.replace(/(^|[\s])\*(.+?)\*(?=[\s]|$)/g, '$1$2');         // *text*
+            text = text.replace(/(^|[\s])_(.+?)_(?=[\s]|$)/g, '$1$2');           // _text_
+
+            // 5) Normalize whitespace
+            //    - Collapse multiple spaces
+            text = text.replace(/[ \t]+/g, ' ');
+            //    - Trim trailing spaces on each line
+            text = text.replace(/[ \t]+$/gm, '');
+
+            // 6) Collapse 3+ blank lines to a single blank line
+            text = text.replace(/\n{3,}/g, '\n\n');
+
+            return text.trim();
+        }
+
+        function parseAnalysisSections(text) {
+            const result = {
+                score: 0,
+                category: 'Unknown',
+                keyNumbers: [],
+                explanation: [],
+                tips: [],
+                incomplete: false
+            };
+
+            let textNorm = text || '';
+
+            // Fix common heading issues and insert line breaks around section titles
+            textNorm = textNorm.replace(/OVERALLHEALTH SUMMARY/gi, 'OVERALL HEALTH SUMMARY');
+
+            textNorm = textNorm
+                .replace(/DISCLAIMER\s*/gi, '\nDISCLAIMER\n')
+                .replace(/OVERALL HEALTH SUMMARY\s*/gi, '\nOVERALL HEALTH SUMMARY\n')
+                .replace(/KEY NUMBERS\s*/gi, '\nKEY NUMBERS\n')
+                .replace(/DETAILED EXPLANATION\s*/gi, '\nDETAILED EXPLANATION\n')
+                .replace(/GENERAL WELLNESS TIPS\s*/gi, '\nGENERAL WELLNESS TIPS\n');
+
+            const lines = textNorm.split('\n').map(l => l.trim()).filter(l => l);
+            let currentSection = '';
+
+            // Regex patterns
+            const scoreRegex = /Overall Health Score:?\s*(\d+)\/100/i;
+            const categoryRegex = /Category:?\s*(.*)/i;
+            // Relaxed Key Number Regex
+            const keyNumRegex = /^(.*?):\s*(.*?)\s*\((?:Normal|normal):\s*(.*?)\)\s*->\s*(?:Status:\s*)?(.*)$/;
+            const keyNumSimpleRegex = /^(.*?):\s*(.*?)\s*->\s*(.*)$/;
+
+            for (let line of lines) {
+                // Section Detection
+                if (line.includes('DISCLAIMER')) { currentSection = 'DISCLAIMER'; continue; } // Added disclaimer section
+                if (line.includes('OVERALL HEALTH SUMMARY')) { currentSection = 'SUMMARY'; continue; }
+                if (line.includes('KEY NUMBERS')) { currentSection = 'NUMBERS'; continue; }
+                if (line.includes('DETAILED EXPLANATION')) { currentSection = 'EXPLANATION'; continue; }
+                if (line.includes('GENERAL WELLNESS TIPS')) { currentSection = 'TIPS'; continue; }
+                // if (line.includes('DISCLAIMER')) continue; // Removed as it's now a section
+
+                if (currentSection === 'SUMMARY') {
+                    const scoreMatch = line.match(scoreRegex);
+                    if (scoreMatch) result.score = parseInt(scoreMatch[1], 10);
+
+                    const catMatch = line.match(categoryRegex);
+                    if (catMatch) result.category = catMatch[1];
+                }
+                else if (currentSection === 'NUMBERS') {
+                    const match = line.match(keyNumRegex);
+                    if (match) {
+                        result.keyNumbers.push({
+                            name: match[1].trim(),
+                            value: match[2].trim(),
+                            range: match[3].trim(),
+                            status: match[4].trim()
+                        });
+                    } else {
+                        // Try simple fallback
+                        const simpleMatch = line.match(keyNumSimpleRegex);
+                        if (simpleMatch) {
+                            result.keyNumbers.push({
+                                name: simpleMatch[1].trim(),
+                                value: simpleMatch[2].trim(),
+                                range: '-',
+                                status: simpleMatch[3].trim()
+                            });
+                        }
+                    }
+                }
+                else if (currentSection === 'EXPLANATION') {
+                    // Avoid adding simple status lines or empty lines as explanation
+                    if (line.length > 5) result.explanation.push(line);
+                }
+                else if (currentSection === 'TIPS') {
+                    // Remove leading numbers "1. "
+                    result.tips.push(line.replace(/^\d+\.\s*/, ''));
+                }
+            }
+
+            // Completeness Check
+            let incomplete = false;
+            // Less than 3 key numbers likely means truncation (unless report is tiny, but usually we want at least header stuff)
+            if (!result.keyNumbers || result.keyNumbers.length < 3) incomplete = true;
+            // Explanation usually has at least 2 paragraphs
+            if (!result.explanation || result.explanation.length < 2) incomplete = true;
+            // Tips usually has at least 2-3 items
+            if (!result.tips || result.tips.length < 2) incomplete = true;
+
+            result.incomplete = incomplete;
+
+            return result;
+        }
+
+        function renderParsedResults(data) {
+            // 1. Score & Category
+            els.scoreDisplay.textContent = data.score;
+            els.categoryBadge.textContent = data.category;
+
+            // Color Logic for Score
+            const circle = els.scoreCircle;
+            const circumference = 2 * Math.PI * 56; // r=56
+            const offset = circumference - (data.score / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            let colorClass = 'text-yellow-500';
+            let bgClass = 'bg-yellow-100 text-yellow-800';
+
+            if (data.score >= 90) { colorClass = 'text-green-500'; bgClass = 'bg-green-100 text-green-800'; }
+            else if (data.score >= 75) { colorClass = 'text-emerald-500'; bgClass = 'bg-emerald-100 text-emerald-800'; }
+            else if (data.score >= 60) { colorClass = 'text-yellow-500'; bgClass = 'bg-yellow-100 text-yellow-800'; }
+            else if (data.score >= 40) { colorClass = 'text-orange-500'; bgClass = 'bg-orange-100 text-orange-800'; }
+            else { colorClass = 'text-red-600'; bgClass = 'bg-red-100 text-red-800'; }
+
+            circle.setAttribute('class', `transform -rotate-90 transition-all duration-1000 ease-out ${colorClass}`);
+            els.categoryBadge.className = `inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${bgClass}`;
+
+            // 2. Key Numbers
+            els.keyNumbersBody.innerHTML = '';
+            data.keyNumbers.forEach(item => {
+                let statusColor = 'text-gray-600 font-medium';
+                const s = item.status.toLowerCase();
+                if (s.includes('high')) statusColor = 'text-red-600 font-bold';
+                else if (s.includes('low')) statusColor = 'text-blue-600 font-bold';
+                else if (s.includes('normal')) statusColor = 'text-green-600 font-bold';
+
+                const row = `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">${item.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-700">${item.value}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-xs hidden sm:table-cell">${item.range}</td>
+                        <td class="px-6 py-4 whitespace-nowrap ${statusColor}">${item.status}</td>
+                    </tr>
+                `;
+                els.keyNumbersBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            // 3. Explanation
+            els.detailedExplanation.innerHTML = data.explanation.map(p => `<p>${p}</p>`).join('');
+
+            // Incomplete Warning for Explanation
+            if (data.incomplete) {
+                els.detailedExplanation.insertAdjacentHTML('beforeend',
+                    '<p class="mt-3 text-xs text-red-500 italic font-semibold border-t border-red-100 pt-2">⚠️ Note: AI response seems incomplete or truncated. You can try running the analysis again or checking specific test results above.</p>');
+            }
+
+            // 4. Tips
+            els.wellnessTips.innerHTML = data.tips.map((tip, idx) => `
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold mt-0.5">
+                        ${idx + 1}
+                    </div>
+                    <p class="ml-3 text-sm text-gray-600">${tip}</p>
+                </div>
+            `).join('');
+        }
+
+        // --- Chat Functions ---
+
+        function addChatMessage(role, content) {
+            const container = els.chatMessages;
+            const isUser = role === 'user';
+
+            const bubble = document.createElement('div');
+            bubble.className = isUser
+                ? 'flex justify-end mb-2'
+                : 'flex justify-start mb-2';
+
+            const inner = document.createElement('div');
+            inner.className = isUser
+                ? 'max-w-[80%] bg-indigo-600 text-white rounded-2xl px-4 py-2.5 text-sm shadow-sm'
+                : 'max-w-[80%] bg-white text-gray-800 rounded-2xl px-4 py-2.5 text-sm shadow-sm border border-gray-100';
+
+            // Preserve line breaks in content
+            inner.innerHTML = content.replace(/\n/g, '<br>');
+            bubble.appendChild(inner);
+            container.appendChild(bubble);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function setChatLoading(isLoading) {
+            els.chatInput.disabled = isLoading;
+            els.chatSendBtn.disabled = isLoading;
+            if (isLoading) {
+                els.chatSendBtn.innerHTML = `
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                `;
+            } else {
+                els.chatSendBtn.innerHTML = `
+                    <span>Send</span>
+                    <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                `;
+            }
+        }
+
+        async function callChatApi(apiKey, reportContext, history, userQuestion) {
+            const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+            const MODEL = "nvidia/nemotron-nano-12b-v2-vl:free";
+
+            // Truncate report if too long (keep first ~3000 chars for context)
+            const truncatedReport = reportContext.length > 3000
+                ? reportContext.substring(0, 3000) + '\n... [truncated for brevity]'
+                : reportContext;
+
+            const systemPrompt = `
+You are a helpful medical assistant AI. You have access to the following blood report text:
+
+---BEGIN REPORT---
+${truncatedReport}
+---END REPORT---
+
+Use this information to answer the user's follow-up questions in simple, safe language.
+
+RULES:
+- Be concise and helpful.
+- Explain medical terms in plain language.
+- Do NOT give diagnoses or treatment plans.
+- Always remind that a doctor should be consulted for medical decisions.
+- If the answer is not in the report, say so honestly.
+`;
+
+            // Build messages array with history
+            const messages = [
+                { role: "system", content: systemPrompt },
+                ...history,
+                { role: "user", content: userQuestion }
+            ];
+
+            const payload = {
+                model: MODEL,
+                messages: messages,
+                temperature: 0.4,
+                max_tokens: 800
+            };
+
+            const sanitizedKey = apiKey.replace(/[^\x00-\x7F]/g, "").trim();
+
+            const response = await fetch(OPENROUTER_API_URL, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${sanitizedKey}`,
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://mini-blood-report-analyzer.vercel.app",
+                    "X-Title": "Mini Blood Report Analyzer Chat"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                let errorMsg = `API Error: ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    if (errData.error && errData.error.message) {
+                        errorMsg = errData.error.message;
+                    }
+                } catch (e) { /* ignore */ }
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+            if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+                throw new Error("Empty response from AI.");
+            }
+
+            return data.choices[0].message.content.trim();
+        }
+
+        async function handleChatSend() {
+            const apiKey = els.apiKey.value.trim();
+            const userQuestion = els.chatInput.value.trim();
+
+            // Validations
+            if (!reportText) {
+                addChatMessage('assistant', "Please upload and analyze a report first before chatting.");
+                return;
+            }
+            if (!apiKey) {
+                addChatMessage('assistant', "Please enter your OpenRouter API key above.");
+                return;
+            }
+            if (!userQuestion) {
+                return; // Ignore empty input
+            }
+
+            // Add user message to UI and history
+            addChatMessage('user', userQuestion);
+            chatHistory.push({ role: 'user', content: userQuestion });
+            els.chatInput.value = '';
+
+            setChatLoading(true);
+
+            try {
+                const reply = await callChatApi(apiKey, reportText, chatHistory, userQuestion);
+                const cleanedReply = sanitizeForDisplay(reply);
+                addChatMessage('assistant', cleanedReply);
+                chatHistory.push({ role: 'assistant', content: cleanedReply });
+            } catch (error) {
+                console.error('Chat error:', error);
+                addChatMessage('assistant', "I'm having trouble responding right now. Please try again.");
+            } finally {
+                setChatLoading(false);
+                els.chatInput.focus();
+            }
+        }
+
+        // --- Chat Event Listeners ---
+        els.chatSendBtn.addEventListener('click', handleChatSend);
+        els.chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleChatSend();
+            }
+        });
     </script>
 </body>
-</html>
 
+</html>
